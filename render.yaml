@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: club-collections-api
+    runtime: node
+    # The Express backend lives in the server/ subdirectory.
+    rootDir: server
+    plan: starter # 'starter' or higher is required for a persistent disk
+    buildCommand: npm install
+    startCommand: npm start
+    # Persistent disk so the SQLite DB and uploaded files survive redeploys.
+    disk:
+      name: club-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATA_DIR
+        value: /data
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong secret once and keeps it
+      # Not strictly needed when the frontend proxies via Vercel rewrites, but set
+      # it to your Vercel URL if you ever call the API directly from the browser.
+      # - key: CORS_ORIGIN
+      #   value: https://your-app.vercel.app
