@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { authApi } from '../api'
+import PasswordInput from '../components/PasswordInput.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -65,11 +66,11 @@ async function submit() {
           </div>
           <div>
             <label class="label">Password</label>
-            <input v-model="form.password" class="input" type="password" placeholder="At least 6 characters" autocomplete="new-password" required />
+            <PasswordInput v-model="form.password" placeholder="At least 6 characters" autocomplete="new-password" required />
           </div>
           <div>
             <label class="label">Confirm Password</label>
-            <input v-model="form.confirm" class="input" type="password" placeholder="Repeat password" autocomplete="new-password" required />
+            <PasswordInput v-model="form.confirm" placeholder="Repeat password" autocomplete="new-password" required />
           </div>
 
           <div v-if="error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

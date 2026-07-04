@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { authApi } from '../api'
+import PasswordInput from '../components/PasswordInput.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -50,7 +51,7 @@ async function submit() {
           </div>
           <div>
             <label class="label">Password</label>
-            <input v-model="form.password" class="input" type="password" placeholder="••••••••" autocomplete="current-password" required />
+            <PasswordInput v-model="form.password" placeholder="••••••••" autocomplete="current-password" required />
           </div>
 
           <div v-if="error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
