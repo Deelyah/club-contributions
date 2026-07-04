@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn build *)"
+      "Bash(yarn build *)",
+      "Bash(rm -rf /tmp/ccmock)",
+      "Bash(npx tsc *)",
+      "Read(//tmp/**)"
     ]
   }
 }
