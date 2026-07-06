@@ -163,12 +163,12 @@ function paymentFromForm(fd: FormData, existing?: MockPayment): MockPayment {
   return {
     id: existing?.id ?? uid(),
     member_id: get('member_id') ?? existing?.member_id ?? '',
-    period_label: get('period_label') ?? existing?.period_label ?? '',
+    payment_type: get('payment_type') ?? existing?.payment_type ?? '',
     payment_date: get('payment_date') ?? existing?.payment_date ?? '',
     due_amount: due_amount != null ? parseFloat(due_amount) : existing?.due_amount ?? 0,
     amount_paid: amount_paid != null ? parseFloat(amount_paid) || 0 : existing?.amount_paid ?? 0,
     receipt_path,
-    notes: get('notes') ?? existing?.notes ?? null,
+    narration: get('narration') ?? existing?.narration ?? null,
     created_by_username: existing?.created_by_username ?? currentUser()?.username ?? 'admin',
     created_at: existing?.created_at ?? nowIso(),
     updated_at: nowIso(),
@@ -185,13 +185,13 @@ export const paymentsApi = {
 
   add: (data: FormData) => {
     const payment = paymentFromForm(data)
-    if (!payment.member_id || !payment.period_label || !payment.payment_date || !payment.due_amount) {
-      return fail('member_id, period_label, payment_date, and due_amount are required')
+    if (!payment.member_id || !payment.payment_type || !payment.payment_date || !payment.due_amount) {
+      return fail('member_id, payment_type, payment_date, and due_amount are required')
     }
     db.payments.push(payment)
     const member = db.users.find((u) => u.id === payment.member_id) ?? null
     addAudit('ADD_PAYMENT', member, {
-      period_label: payment.period_label,
+      payment_type: payment.payment_type,
       amount_paid: payment.amount_paid,
       payment_date: payment.payment_date,
     })
@@ -206,7 +206,7 @@ export const paymentsApi = {
     const member = db.users.find((u) => u.id === existing.member_id) ?? null
     addAudit('UPDATE_PAYMENT', member, {
       payment_id: id,
-      period_label: existing.period_label,
+      payment_type: existing.payment_type,
       amount_paid: existing.amount_paid,
     })
     return ok(existing)

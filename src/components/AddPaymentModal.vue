@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { paymentsApi, duesApi } from "../api";
 import type { Payment } from "./PaymentTable.vue";
+import { PAYMENT_TYPES } from "../constants/paymentTypes";
 
 const props = defineProps<{
   memberId: string;
@@ -14,11 +15,13 @@ const emit = defineEmits<{
 }>();
 
 const form = ref({
-  period_label: "",
+  payment_type: "",
   amount_paid: "",
   payment_date: "",
-  notes: "",
+  narration: "",
 });
+
+const NARRATION_MAX_WORDS = 50;
 const receiptFile = ref<File | null>(null);
 const receiptInput = ref<HTMLInputElement | null>(null);
 const error = ref("");
@@ -38,18 +41,18 @@ watch(
   (p) => {
     if (p) {
       form.value = {
-        period_label: p.period_label,
+        payment_type: p.payment_type || "",
         amount_paid: String(p.amount_paid),
         payment_date: p.payment_date || "",
-        notes: p.notes || "",
+        narration: p.narration || "",
       };
       storedDueAmount.value = p.due_amount;
     } else {
       form.value = {
-        period_label: "",
+        payment_type: "",
         amount_paid: "",
         payment_date: "",
-        notes: "",
+        narration: "",
       };
       storedDueAmount.value = 0;
     }
@@ -63,6 +66,11 @@ const effectiveDueAmount = computed(() =>
 
 const amountPaidNum = computed(() => parseFloat(form.value.amount_paid) || 0);
 
+const narrationWordCount = computed(() => {
+  const trimmed = form.value.narration.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+});
+
 function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   receiptFile.value = target.files?.[0] ?? null;
@@ -75,15 +83,19 @@ function clearFile() {
 
 async function submit() {
   error.value = "";
+  if (narrationWordCount.value > NARRATION_MAX_WORDS) {
+    error.value = `Narration must be ${NARRATION_MAX_WORDS} words or fewer.`;
+    return;
+  }
   loading.value = true;
   try {
     const fd = new FormData();
     fd.append("member_id", props.memberId);
-    fd.append("period_label", form.value.period_label);
+    fd.append("payment_type", form.value.payment_type);
     fd.append("due_amount", String(effectiveDueAmount.value));
     fd.append("payment_date", form.value.payment_date);
     fd.append("amount_paid", String(amountPaidNum.value));
-    if (form.value.notes) fd.append("notes", form.value.notes);
+    if (form.value.narration) fd.append("narration", form.value.narration);
     if (receiptFile.value) fd.append("receipt", receiptFile.value);
 
     const { data } = props.payment
@@ -124,16 +136,15 @@ async function submit() {
       </div>
 
       <form @submit.prevent="submit" class="space-y-4">
-        <!-- Period label -->
+        <!-- Payment type -->
         <div>
-          <label class="label">Period Label</label>
-          <input
-            v-model="form.period_label"
-            class="input"
-            type="text"
-            placeholder="e.g. January 2026"
-            required
-          />
+          <label class="label">Payment Type</label>
+          <select v-model="form.payment_type" class="input" required>
+            <option value="" disabled>Select a payment type</option>
+            <option v-for="type in PAYMENT_TYPES" :key="type" :value="type">
+              {{ type }}
+            </option>
+          </select>
         </div>
 
         <!-- Amount paid + Payment date -->
@@ -279,14 +290,26 @@ async function submit() {
           </p>
         </div>
 
-        <!-- Notes -->
+        <!-- Narration -->
         <div>
-          <label class="label">Notes</label>
+          <div class="flex items-center justify-between">
+            <label class="label">Narration</label>
+            <span
+              class="text-xs"
+              :class="
+                narrationWordCount > NARRATION_MAX_WORDS
+                  ? 'text-red-600 font-medium'
+                  : 'text-slate-400'
+              "
+            >
+              {{ narrationWordCount }} / {{ NARRATION_MAX_WORDS }} words
+            </span>
+          </div>
           <textarea
-            v-model="form.notes"
+            v-model="form.narration"
             class="input resize-none"
             rows="2"
-            placeholder="Optional notes…"
+            placeholder="Optional narration (max 50 words)…"
           />
         </div>
 
@@ -305,7 +328,11 @@ async function submit() {
           >
             Cancel
           </button>
-          <button type="submit" class="btn-primary flex-1" :disabled="loading">
+          <button
+            type="submit"
+            class="btn-primary flex-1"
+            :disabled="loading || narrationWordCount > NARRATION_MAX_WORDS"
+          >
             <span
               v-if="loading"
               class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"

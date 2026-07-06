@@ -5,12 +5,12 @@ import PaymentStatusBadge from "./PaymentStatusBadge.vue";
 export interface Payment {
   id: string;
   member_id: string;
-  period_label: string;
+  payment_type: string;
   payment_date: string;
   due_amount: number;
   amount_paid: number;
   receipt_path: string | null;
-  notes: string | null;
+  narration: string | null;
   created_by_username?: string;
   created_at: string;
   updated_at: string;
@@ -26,7 +26,7 @@ const emit = defineEmits<{
 }>();
 
 type SortKey =
-  | "period_label"
+  | "payment_type"
   | "payment_date"
   | "due_amount"
   | "amount_paid"
@@ -46,8 +46,8 @@ const statusOrder = { unpaid: 0, partial: 1, paid: 2, credit: 3 };
 const sorted = computed(() => {
   return [...props.payments].sort((a, b) => {
     let cmp = 0;
-    if (sortKey.value === "period_label")
-      cmp = a.period_label.localeCompare(b.period_label);
+    if (sortKey.value === "payment_type")
+      cmp = a.payment_type.localeCompare(b.payment_type);
     else if (sortKey.value === "payment_date")
       cmp = a.payment_date.localeCompare(b.payment_date);
     else if (sortKey.value === "due_amount") cmp = a.due_amount - b.due_amount;
@@ -92,7 +92,7 @@ function fmtMoney(n: number) {
         <tr class="border-b border-slate-100">
           <th
             v-for="col in [
-              { key: 'period_label', label: 'Period' },
+              { key: 'payment_type', label: 'Payment Type' },
               { key: 'payment_date', label: 'Payment Date' },
               { key: 'due_amount', label: 'Due' },
               { key: 'amount_paid', label: 'Paid' },
@@ -110,6 +110,11 @@ function fmtMoney(n: number) {
           <th
             class="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4"
           >
+            Narration
+          </th>
+          <th
+            class="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-4"
+          >
             Receipt
           </th>
           <th v-if="showEdit" class="py-3 px-4" />
@@ -118,7 +123,7 @@ function fmtMoney(n: number) {
       <tbody>
         <tr v-if="sorted.length === 0">
           <td
-            :colspan="showEdit ? 7 : 6"
+            :colspan="showEdit ? 8 : 7"
             class="text-center text-slate-400 py-12 text-sm"
           >
             No payment records yet
@@ -129,8 +134,8 @@ function fmtMoney(n: number) {
           :key="p.id"
           class="border-b border-slate-50 hover:bg-slate-50/60 transition-colors"
         >
-          <td class="py-3 px-4 font-medium text-slate-800">
-            {{ p.period_label }}
+          <td class="py-3 px-4 text-slate-800 font-medium whitespace-nowrap">
+            {{ p.payment_type || "—" }}
           </td>
           <td class="py-3 px-4 text-slate-600">{{ fmt(p.payment_date) }}</td>
           <td class="py-3 px-4 text-slate-700 font-medium">
@@ -144,6 +149,12 @@ function fmtMoney(n: number) {
               :due-amount="p.due_amount"
               :amount-paid="p.amount_paid"
             />
+          </td>
+          <td class="py-3 px-4 text-slate-600 max-w-[16rem]">
+            <span v-if="p.narration" class="block truncate" :title="p.narration">
+              {{ p.narration }}
+            </span>
+            <span v-else class="text-slate-300">—</span>
           </td>
           <td class="py-3 px-4">
             <a

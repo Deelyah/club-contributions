@@ -16,12 +16,12 @@ export interface MockUser {
 export interface MockPayment {
   id: string
   member_id: string
-  period_label: string
+  payment_type: string
   payment_date: string
   due_amount: number
   amount_paid: number
   receipt_path: string | null
-  notes: string | null
+  narration: string | null
   created_by_username: string
   created_at: string
   updated_at: string
@@ -81,6 +81,16 @@ const MONTHS = [
 
 const DUE = 5000
 
+// A payment type per month index, so the seeded rows show some variety.
+const TYPE_BY_MONTH = [
+  'Monthly Kitty',
+  'Annual Dues',
+  'Mid-Week Kitty',
+  'Tournament',
+  'Monthly Kitty',
+  "Founder's Kitty",
+]
+
 // amount_paid per member (rows align with MEMBERS), one entry per MONTHS index.
 // Mix of paid (5000), partial (<5000), unpaid (0) and credit/overpaid (>5000).
 const PATTERNS: number[][] = [
@@ -98,12 +108,15 @@ export const seedPayments: MockPayment[] = MEMBERS.flatMap((member, i) =>
     return {
       id: `p-${member.id}-${m}`,
       member_id: member.id,
-      period_label: month.label,
+      payment_type: TYPE_BY_MONTH[m],
       payment_date: month.date,
       due_amount: DUE,
       amount_paid,
       receipt_path: null,
-      notes: amount_paid === 0 ? 'Not yet paid' : null,
+      narration:
+        amount_paid === 0
+          ? 'Payment outstanding — awaiting confirmation.'
+          : `${TYPE_BY_MONTH[m]} contribution for ${month.label}.`,
       created_by_username: 'admin',
       created_at: `${month.date}T09:00:00.000Z`,
       updated_at: `${month.date}T09:00:00.000Z`,
@@ -118,7 +131,7 @@ export const seedAudit: MockAudit[] = [
     member_username: 'ada',
     member_id: 'u1',
     action: 'ADD_PAYMENT',
-    details: JSON.stringify({ period_label: 'June 2026', amount_paid: 5000, payment_date: '2026-06-04' }),
+    details: JSON.stringify({ payment_type: "Founder's Kitty", amount_paid: 5000, payment_date: '2026-06-04' }),
     created_at: '2026-06-04T09:00:00.000Z',
   },
   {
@@ -127,7 +140,7 @@ export const seedAudit: MockAudit[] = [
     member_username: 'chidi',
     member_id: 'u3',
     action: 'UPDATE_PAYMENT',
-    details: JSON.stringify({ period_label: 'February 2026', amount_paid: 2500 }),
+    details: JSON.stringify({ payment_type: 'Annual Dues', amount_paid: 2500 }),
     created_at: '2026-05-20T13:30:00.000Z',
   },
   {
